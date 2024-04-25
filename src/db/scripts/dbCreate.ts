@@ -1,11 +1,5 @@
-import { configDotenv } from "dotenv";
+import "dotenv/config";
 import { adminClient } from "..";
-
-if (process.env["NODE_ENV"] === "test") {
-  configDotenv({ path: ".env.test" });
-} else {
-  configDotenv();
-}
 
 const dbName = process.env["PGDATABASE"];
 
