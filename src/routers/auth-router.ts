@@ -11,7 +11,7 @@ const authRouter = express.Router();
 //POST/register:
 
 authRouter.post(
-  "/register",
+  "/signup",
   validationHandler(userSchema),
   async (req, res, next) => {
     try {
