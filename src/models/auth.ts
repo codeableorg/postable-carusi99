@@ -45,3 +45,7 @@ export type UserParams = z.infer<typeof userSchema>;
 
 export type User = UserParams & { id: number };
 
+export interface Userupdate{
+  id: number;
+  fieldsToUpdate: Record<string, any>;
+}
