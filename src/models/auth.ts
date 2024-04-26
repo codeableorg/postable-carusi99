@@ -18,11 +18,11 @@ export const userSchema = z.object({
     invalid_type_error: "Email debe ser un string",
   }).email({ message: "El formato del correo electrónico es inválido" }).optional(),
 
-  firstName: z.string({
+  firstname: z.string({
     invalid_type_error: "Nombre debe ser un string",
   }).optional(),
 
-  lastName: z.string({
+  lastname: z.string({
     invalid_type_error: "Apellido debe ser un string",
   }).optional(),
 
@@ -30,12 +30,12 @@ export const userSchema = z.object({
     errorMap: () => ({ message: "El rol debe ser admin o user" }),
   }).default("user"),
 
-  createdAt: z.date({
+  createdat: z.date({
     required_error: "CreatedAt es requerido",
     invalid_type_error: "CreatedAt debe ser una fecha",
   }).default(() => new Date()),
 
-  updatedAt: z.date({
+  updatedat: z.date({
     required_error: "UpdatedAt es requerido",
     invalid_type_error: "UpdatedAt debe ser una fecha",
   }).default(() => new Date()),

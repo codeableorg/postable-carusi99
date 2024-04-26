@@ -1,7 +1,7 @@
 import express from "express";
 import { validationHandler } from "../middlewares/validation";
 import { userSchema } from "../models/auth";
-import { createUser, validateCredentials } from "../services/auth-service";
+import { createUser, validateCredentials } from "../services/auth.service";
 import jwt from "jsonwebtoken";
 
 const jwtSecret = "ultra-secret";
