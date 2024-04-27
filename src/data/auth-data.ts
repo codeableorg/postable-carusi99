@@ -2,6 +2,8 @@ import * as db from "../db";
 import { ApiError } from "../middlewares/error";
 import { UserParams, User } from "../models/auth";
 
+
+//CREA UN NUEVO USUARIO
 export async function createUsers(user: UserParams): Promise<User> {
   const now = new Date();
   const query =
@@ -14,12 +16,12 @@ export async function createUsers(user: UserParams): Promise<User> {
   const queryParams = [
     user.username,
     user.password,
-    user.email || '', // Reemplazar null con un valor por defecto, como una cadena vacía ''
-    user.firstname || '', // Reemplazar null con un valor por defecto
-    user.lastname || '', // Reemplazar null con un valor por defecto
+    user.email || '',
+    user.firstname || '', 
+    user.lastname || '', 
     user.role,
-    now.toISOString(), // Convertir Date a string
-    now.toISOString(), // Convertir Date a string
+    now.toISOString(), 
+    now.toISOString(), 
   ];
 
   try {
@@ -34,7 +36,7 @@ export async function createUsers(user: UserParams): Promise<User> {
     return {
       id: result.rows[0].id,
       username: result.rows[0].username,
-      password: '', // Puedes inicializarla con un valor vacío o cualquier otro valor predeterminado
+      password: '',
       firstname: result.rows[0].firstName,
       lastname: result.rows[0].lastName,
       role: result.rows[0].role,
@@ -47,6 +49,7 @@ export async function createUsers(user: UserParams): Promise<User> {
 }
 
 
+//OBTIENE EL USUARIO POR SU NOMBRE DE USERNAME
 export async function getUserByUsername(
   username: string
 ): Promise<User | undefined> {

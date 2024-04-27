@@ -1,6 +1,7 @@
 import { Post } from '../models/posts';
 import * as db from "../db";
 
+//DAR LIKE A UN POST
 export async function likePost(postId: number): Promise<Post> {
     try {
       // Verificar si el post existe
@@ -12,7 +13,7 @@ export async function likePost(postId: number): Promise<Post> {
         throw new Error('El post especificado no existe');
       }
       
-      // Actualizar el recuento de likes
+      // Actualizar likes
       const query = 'UPDATE posts SET likes_count = likes_count + 1 WHERE id = $1 RETURNING *';
 
       const params = [postId];
@@ -23,6 +24,7 @@ export async function likePost(postId: number): Promise<Post> {
     }
 }
 
+//ELIMINAR LIKE
 export async function unlikePost(postId: number): Promise<Post> {
     try {
       // Verificar si el post existe
@@ -34,7 +36,7 @@ export async function unlikePost(postId: number): Promise<Post> {
         throw new Error('El post especificado no existe');
       }
       
-      // Actualizar el recuento de likes
+      // Actualizar likes
       const query = 'UPDATE posts SET likes_count = likes_count - 1 WHERE id = $1 RETURNING *';
       const params = [postId];
       const { rows } = await db.query(query, params);

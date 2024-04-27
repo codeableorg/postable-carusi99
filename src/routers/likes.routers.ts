@@ -2,8 +2,11 @@
 import express from "express";
 import {likePostInPostsData , unlikePostInPostsData } from "../services/likes.service";
 import { authenticateHandler } from "../middlewares/authenticate";
+
+
 const likeRouter = express.Router();
 
+//DAR LIKE A UN POST
 likeRouter.post('/posts/:postId/like', authenticateHandler, async (req, res) => {
     try {
       const postId = parseInt(req.params.postId);
@@ -15,7 +18,7 @@ likeRouter.post('/posts/:postId/like', authenticateHandler, async (req, res) => 
     }
   });
   
-  // Eliminar like de un post
+  //ELIMINAR LIKE
   likeRouter.delete('/posts/:postId/like', authenticateHandler, async (req, res) => {
     try {
       const postId = parseInt(req.params.postId);

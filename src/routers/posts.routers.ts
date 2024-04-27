@@ -6,6 +6,7 @@ import { authenticateHandler } from "../middlewares/authenticate";
 
 const postsRouter = express.Router();
 
+//TRAE LOS POSTS
 postsRouter.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, username, orderBy = 'createdAt', order = 'asc' } = req.query;
@@ -48,6 +49,8 @@ postsRouter.get('/', async (req, res) => {
   }
 });
 
+
+//TRAE LOS POSTS DE UN USUARIO
 postsRouter.get('/:username', async (req, res) => {
   try {
     const { username } = req.params;
@@ -84,7 +87,7 @@ postsRouter.get('/:username', async (req, res) => {
   }
 });
 
-
+//CREA UN NUEVO POST
 postsRouter.post("/posts", authenticateHandler, async (req, res) => {
   try {
     const { content } = req.body;
@@ -110,7 +113,7 @@ postsRouter.post("/posts", authenticateHandler, async (req, res) => {
   }
 });
 
-
+//EDITA UN POST
 postsRouter.patch("/:id", authenticateHandler, async (req, res) => {
   const postId = parseInt(req.params.id);
   const { content } = req.body;

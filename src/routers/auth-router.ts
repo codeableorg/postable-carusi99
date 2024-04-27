@@ -3,13 +3,12 @@ import { validationHandler } from "../middlewares/validation";
 import { userSchema } from "../models/auth";
 import { createUser, validateCredentials } from "../services/auth.service";
 import jwt from "jsonwebtoken";
+import { ApiError } from "../middlewares/error";
 
 const jwtSecret = "ultra-secret";
-
 const authRouter = express.Router();
 
 //POST/register:
-
 authRouter.post(
   "/signup",
   validationHandler(userSchema),
@@ -32,7 +31,6 @@ authRouter.post(
 );
 
 //POST/Login:
-
 authRouter.post("/login", async (req, res, next) => {
   try {
     const user = await validateCredentials(req.body);

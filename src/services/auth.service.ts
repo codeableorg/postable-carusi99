@@ -34,6 +34,7 @@ export async function createUser(data: UserParams): Promise<User> {
   }
 }
 
+//VALIDAR CREDENCIALES
 export async function validateCredentials(
   credentials: UserParams
 ): Promise<User> {
