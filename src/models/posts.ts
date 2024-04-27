@@ -13,9 +13,3 @@ export interface Post {
 export interface PostFilters {
   username?: string;
 }
-
-export interface PostWithPagination extends Post {
-  // nextPage y previousPage ahora son definidos como 'number | null'
-  nextPage: number | null;
-  previousPage: number | null;
-}

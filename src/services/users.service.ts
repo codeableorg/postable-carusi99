@@ -11,7 +11,7 @@ export async function updateUsers(id: number, user: User){
     fieldsToUpdate: user
   }
 const result: User = await userDB.updateUser(updatedUser);
-return result
+return result;
 }
 
 export async function deleteUsers(id: number): Promise<User | undefined> {

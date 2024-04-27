@@ -1,4 +1,4 @@
-import express from "express";
+import express, { json } from "express";
 import { getUsers, updateUsers, deleteUsers } from "../services/users.service";
 import { ApiError } from "../middlewares/error";
 import { authenticateHandler } from "../middlewares/authenticate";
@@ -15,18 +15,21 @@ userRouter.get("/me", authenticateHandler, async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
     }
-    res.json({
-      ok: true,
-      data: {
-        id: user.id,
-        username: user.username,
-        firstName: user.firstname,
-        email: user.email,
-        role: user.role,
-        createdAt: user.createdat,
-        updatedAt: user.updatedat
-      }
-    });
+    // Verificar si user está definido antes de acceder a sus propiedades
+    if (user) {
+      res.json({
+        ok: true,
+        data: {
+          id: user.id,
+          username: user.username,
+          firstName: user.firstname,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdat,
+          updatedAt: user.updatedat
+        }
+      });
+    }
   } catch (error) {
     next(error);
   }
@@ -39,10 +42,10 @@ userRouter.patch("/me", authenticateHandler, async (req, res, next) => {
   try {
     const user: User = req.body;
     const updatedUser = await updateUsers(req.userId, user);
-    if (!user) {
+    if (!updatedUser) {
       return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
     }
-    res.json({
+    res.status(200).json({
       ok: true,
       data: {
         id: user.id,

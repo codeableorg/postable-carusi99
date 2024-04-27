@@ -1,8 +1,10 @@
-import { User, UserParams, Userupdate } from "../models/auth";
+import { User} from "../models/auth";
+import { Userupdate } from "../models/auth";
 import * as db from "../db";
 
 export async function getUser(id: number): Promise<User | undefined> {
-    return (await db.query("SELECT * FROM users WHERE id = $1", [id])).rows[0];
+    const result = await db.query("SELECT * FROM users WHERE id = $1", [id])
+  return result.rows[0];
   }
   
 
