@@ -62,7 +62,7 @@ postsRouter.get('/:username', async (req, res) => {
     const userExists = await checkIfUserExists(username);
 
     if (userExists) {
-      const posts = await getPostsByUsernameFromDatabase(username);
+      const posts = await getPostsByUsernameFromDatabase(username, pageInt, limitInt, orderBy as string, order as string);
 
       if (posts) { // Verificar si se devolvieron posts
         res.status(200).json({
@@ -113,8 +113,8 @@ postsRouter.post("/posts", authenticateHandler, async (req, res) => {
   }
 });
 
-//EDITA UN POST
-postsRouter.patch("/:id", authenticateHandler, async (req, res) => {
+//EDITA UN POST 
+postsRouter.patch("/posts/:id", authenticateHandler, async (req, res) => {
   const postId = parseInt(req.params.id);
   const { content } = req.body;
 

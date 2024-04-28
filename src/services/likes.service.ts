@@ -1,21 +1,20 @@
 import { Post } from "../models/posts";
-import * as db from "../data/likes.data";
+import { createLikePost, unlikePost } from "../data/likes.data";
+import { Like } from "../models/like";
 
-export async function likePostInPostsData(postId: number): Promise<Post> {
-    try {
-      const likedPost = await db.likePost(postId);
+export async function likePostInPostsData(like: Like): Promise<Post> {
+  
+      const likedPost = await createLikePost(like);
       return likedPost;
-    } catch (error) {
-      throw error;
-    }
-  }
+    } 
+  
   
   // Eliminar like de un post
-  export async function unlikePostInPostsData(postId: number): Promise<Post> {
-    try {
-      const unlikedPost = await db.unlikePost(postId);
+  export async function unlikePostInPostsData(
+    postId: number,
+    userId: number
+  ): Promise<Post | null> {
+    const unlikedPost = await unlikePost(postId, userId);
       return unlikedPost;
-    } catch (error) {
-      throw error;
     }
-  }
+  

@@ -2,36 +2,36 @@ import express, { json } from "express";
 import { getUsers, updateUsers, deleteUsers } from "../services/users.service";
 import { ApiError } from "../middlewares/error";
 import { authenticateHandler } from "../middlewares/authenticate";
-import { User } from "../models/auth";
+import { User } from "../models/users";
 
 const userRouter = express.Router();
 
 userRouter.get("/me", authenticateHandler, async (req, res, next) => {
-  if (req.userId === undefined) {
-    return res.status(401).json({ ok: false, message: "No autorizado" });
-  }
   try {
+    if (req.userId === undefined) {
+      return res.status(401).json({ ok: false, message: "No autorizado" });
+    }
+    
     const user = await getUsers(req.userId);
+    
     if (!user) {
       return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
     }
-    // Verificar si user está definido antes de acceder a sus propiedades
-    if (user) {
-      res.json({
-        ok: true,
-        data: {
-          id: user.id,
-          username: user.username,
-          firstName: user.firstname,
-          email: user.email,
-          role: user.role,
-          createdAt: user.createdat,
-          updatedAt: user.updatedat
-        }
-      });
-    }
+    
+    // Devuelve los datos del usuario si está definido
+    res.json({
+      ok: true,
+      data: {
+        id: user.id,
+        username: user.username,
+        firstName: user.firstname,
+        email: user.email,
+        createdAt: user.createdat,
+        updatedAt: user.updatedat
+      }
+    });
   } catch (error) {
-    next(error);
+    next(error); // Maneja cualquier error que ocurra durante la obtención del usuario
   }
 });
 
@@ -41,7 +41,7 @@ userRouter.patch("/me", authenticateHandler, async (req, res, next) => {
   }
   try {
     const user: User = req.body;
-    const updatedUser = await updateUsers(req.userId, user);
+    const updatedUser = await updateUsers(req.userId, req.body);
     if (!updatedUser) {
       return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
     }
@@ -52,7 +52,6 @@ userRouter.patch("/me", authenticateHandler, async (req, res, next) => {
         username: user.username,
         firstName: user.firstname,
         email: user.email,
-        role: user.role,
         createdAt: user.createdat,
         updatedAt: user.updatedat
       }

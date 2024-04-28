@@ -1,47 +1,40 @@
-import { Post } from '../models/posts';
-import * as db from "../db";
+import { query } from '../db'; // Ajusta la ruta de tu módulo de base de datos
+import { Like } from '../models/like';
+import { Post } from '../models/posts'; // Ajusta la importación según la ruta correcta
 
-//DAR LIKE A UN POST
-export async function likePost(postId: number): Promise<Post> {
-    try {
-      // Verificar si el post existe
-      const postExistsQuery = 'SELECT * FROM posts WHERE id = $1';
-      const postExistsParams = [postId];
-      const { rows: existingPosts } = await db.query(postExistsQuery, postExistsParams);
-      
-      if (existingPosts.length === 0) {
-        throw new Error('El post especificado no existe');
-      }
-      
-      // Actualizar likes
-      const query = 'UPDATE posts SET likes_count = likes_count + 1 WHERE id = $1 RETURNING *';
+// DAR LIKE A UN POST
+export async function createLikePost(like: Like): Promise<Post> {
+  const { userid, postid, createdat } = like;
+  const likeResult = await query(
+    "INSERT INTO likes (userId, postId, createdat) VALUES ($1, $2, $3)",
+    [userid, postid, createdat]
+  );
 
-      const params = [postId];
-      const { rows } = await db.query(query, params);
-      return rows[0];
-    } catch (error) {
-      throw error;
-    }
+  const postResult = await query(
+    "SELECT p.id, p.content, p.createdat, p.updatedat, u.username, COALESCE(COUNT(pl.*), 0) AS likesCount FROM posts AS p JOIN users AS u ON u.id = p.userid LEFT JOIN likes AS pl ON pl.postid = p.id WHERE p.id = $1 GROUP BY p.id, u.username",
+    [postid]
+  );
+
+  return {
+    ...postResult.rows[0],
+    like: likeResult.rows[0],
+  };
 }
 
-//ELIMINAR LIKE
-export async function unlikePost(postId: number): Promise<Post> {
-    try {
-      // Verificar si el post existe
-      const postExistsQuery = 'SELECT * FROM posts WHERE id = $1';
-      const postExistsParams = [postId];
-      const { rows: existingPosts } = await db.query(postExistsQuery, postExistsParams);
-      
-      if (existingPosts.length === 0) {
-        throw new Error('El post especificado no existe');
-      }
-      
-      // Actualizar likes
-      const query = 'UPDATE posts SET likes_count = likes_count - 1 WHERE id = $1 RETURNING *';
-      const params = [postId];
-      const { rows } = await db.query(query, params);
-      return rows[0];
-    } catch (error) {
-      throw error;
-    }
+// ELIMINAR LIKE
+export async function unlikePost(
+  postId: number,
+  userId: number
+): Promise<Post | null> {
+  await query("DELETE FROM likes WHERE postid = $1 AND userid = $2", [
+    postId,
+    userId,
+  ]);
+
+  const postResult = await query(
+    "SELECT p.id, p.content, p.createdat, p.updatedat, u.username, COALESCE(COUNT(pl.*), 0) AS likesCount FROM posts AS p JOIN users AS u ON u.id = p.userid LEFT JOIN likes AS pl ON pl.postid = p.id WHERE p.id = $1 GROUP BY p.id, u.username",
+    [postId]
+  );
+
+  return postResult.rows[0] || null;
 }
