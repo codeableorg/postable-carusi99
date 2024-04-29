@@ -2,7 +2,6 @@ import * as db from "../db";
 import { ApiError } from "../middlewares/error";
 import { UserParams, User } from "../models/auth";
 
-
 //CREA UN NUEVO USUARIO
 export async function createUsers(user: UserParams): Promise<User> {
   const now = new Date();
@@ -47,8 +46,6 @@ export async function createUsers(user: UserParams): Promise<User> {
     throw new ApiError('Error al insertar el usuario', 400);
   }
 }
-
-
 //OBTIENE EL USUARIO POR SU NOMBRE DE USERNAME
 export async function getUserByUsername(
   username: string

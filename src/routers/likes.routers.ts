@@ -5,8 +5,6 @@ import { authenticateHandler } from "../middlewares/authenticate";
 import { unlikePost } from "../data/likes.data";
 import { Post } from "../models/posts";
 
-
-
 const likeRouter = express.Router();
 
 //DAR LIKE A UN POST
