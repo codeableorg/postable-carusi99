@@ -2,15 +2,40 @@ import * as db from "../db";
 import { ApiError } from "../middlewares/error";
 import { Post } from "../models/posts";
 import { PostFilters } from "../models/posts";
+import { filtering, sorting } from "./utils";
 
-export async function getPosts(page: number, limit: number, filters: PostFilters = {}, orderBy: string = 'createdAt', order: string = 'asc'): Promise<Post[]> {
-  try {
-    // Utiliza getPostsByUsernameFromDatabase para obtener los posts junto con su conteo de likes
-    return await getPostsByUsernameFromDatabase(filters.username as string, page, limit, orderBy, order);
-  } catch (error) {
-    throw new ApiError('Error al obtener los posts desde la base de datos', 401);
-  }
+export async function getPosts(
+  page: number, 
+  limit: number,
+  filters: PostFilters = {},
+  orderBy: string = 'createdAt',
+  order: string = 'asc'): 
+  Promise<Post[]> {
+    try {
+      // Utiliza getPostsByUsernameFromDatabase para obtener los posts junto con su conteo de likes
+      let query = "SELECT * FROM posts";
+      const queryParams: (string | boolean | number)[] = [];
+
+      // Filtering
+      query = filtering(query, filters, queryParams);
+      // Sorting
+      query += ` ORDER BY ${orderBy} ${order}`;
+
+      // Pagination
+      if (page && limit) {
+        const offset = (page - 1) * limit;
+        query += ` LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+        queryParams.push(limit, offset);
+      }
+
+      const result = await db.query(query, queryParams);
+      return result.rows;
+    } catch (error) {
+      console.error('Error al obtener los posts:', error);
+      throw new ApiError('Error al obtener los posts', 500);
+    }
 }
+
 export async function getTotalPosts(username?: string): Promise<number> {
   try {
     let query = 'SELECT COUNT(*) FROM posts';
@@ -114,3 +139,4 @@ export async function getPostById(postId: number): Promise<Post | null> {
     throw new ApiError('Error al obtener el post desde la base de datos', 400);
   }
 }
+

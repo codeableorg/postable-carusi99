@@ -7,32 +7,27 @@ import { User } from "../models/users";
 const userRouter = express.Router();
 
 userRouter.get("/me", authenticateHandler, async (req, res, next) => {
+  if (req.userId === undefined) {
+    return next(new ApiError("Unauthorized", 401));
+  }
   try {
-    if (req.userId === undefined) {
-      return res.status(401).json({ ok: false, message: "No autorizado" });
-    }
-    
-    const user = await getUsers(req.userId);
-    
-    if (!user) {
-      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
-    }
-    
-    // Devuelve los datos del usuario si está definido
-    res.json({
+    const profile = await getUsers(req.userId);
+    return res.json({
       ok: true,
       data: {
-        id: user.id,
-        username: user.username,
-        firstName: user.firstname,
-        email: user.email,
-        createdAt: user.createdat,
-        updatedAt: user.updatedat
-      }
+        id: profile.id,
+        username: profile.username,
+        email: profile.email,
+        firstName: profile.firstname,
+        lastName: profile.lastname,
+        createdAt: profile.createdat,
+        updatedAt: profile.updatedat,
+      },
     });
   } catch (error) {
-    next(error); // Maneja cualquier error que ocurra durante la obtención del usuario
+    next(new ApiError("Unauthorized", 401));
   }
+
 });
 
 userRouter.patch("/me", authenticateHandler, async (req, res, next) => {

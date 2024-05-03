@@ -4,25 +4,11 @@ import * as db from "../db";
 import { ApiError } from "../middlewares/error";
 
 
-//OBTIENE EL USUARIO POR SU ID
-export async function getUser(id: number): Promise<User | undefined> {
-  try {
-    const query = "SELECT * FROM users WHERE id = $1";
-    const { rows } = await db.query(query, [id]);
-    
-    // Verificar si se encontraron resultados
-    if (rows.length > 0) {
-      return rows[0];
-    } else {
-      return undefined; // Devolver undefined en lugar de null
-    }
-  } catch (error) {
-    console.error('Error al obtener el usuario:', error);
-    throw new ApiError('Error al obtener el usuario', 500);
-  }
+//OBTIENE EL USUARIO POR EL TOKEN
+export async function getUser(id: number): Promise<User> {
+  const result = await db.query("SELECT * FROM users WHERE id=$1", [id]);
+  return result.rows[0];
 }
-
-
   
 //ACTUALIZA UN USUARIO
 
