@@ -23,6 +23,16 @@ SELECT
     NOW(), -- Fecha y hora de creación
     NOW() -- Fecha y hora de actualización
 FROM generate_series(1, 50) AS s(id);
+
+-- Insertar datos de ejemplo en la tabla Posts
+INSERT INTO Posts (userId, content, createdAt, updatedAt)
+SELECT
+    (s.id % 50) + 1, -- ID de usuario aleatorio
+    'Contenido del post ' || s.id, -- Genera un contenido de post concatenando una cadena con el ID
+    NOW(), -- Fecha y hora de creación
+    NOW() -- Fecha y hora de actualización
+FROM generate_series(1, 100) AS s(id);
+
   `).then(() => {
   console.log("Products inserted");
   pool.end();
