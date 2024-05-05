@@ -9,4 +9,9 @@ describe("Backend Testing", () => {
   beforeEach(async () => {
     // Limpia todas las tablas relevantes
     await truncateTable("likes");
-    
+    await db.query(`
+    INSERT INTO Likes (postId, userId, createdAt)
+    VALUES (1, 1, NOW()),
+           (1, 2, NOW());
+           `);
+});
