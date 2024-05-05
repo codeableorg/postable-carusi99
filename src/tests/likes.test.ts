@@ -15,3 +15,11 @@ describe("Backend Testing", () => {
            (1, 2, NOW());
            `);
 });
+it("should like a post", async () => {
+    const response = await request(app).post("/posts/1/like").set('Authorization', 'Bearer your-auth-token');
+    expect(response.statusCode).toBe(200);
+    expect(response.body.ok).toBeTruthy();
+    expect(response.body.data.postid).toBe(1);
+    expect(response.body.data.userid).toBe(1); // Assuming user 1 liked the post
+  });
+})
