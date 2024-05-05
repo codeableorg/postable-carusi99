@@ -24,4 +24,34 @@ describe("Backend Testing", () => {
                 expect(response.body.ok).toBeTruthy();
                 expect(response.body.data).toHaveLength(2);
               });
+
+            it("should update a user", async () => {
+                const userIdToUpdate = 1;
+                const updatedUserData = {
+                  firstName: "Updated",
+                  lastName: "User",
+                  email: "updateduser@example.com",
+                  role: "admin"
+                };
+                const response = await request(app).patch(`/users/${userIdToUpdate}`).send(updatedUserData);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.ok).toBeTruthy();
+                // Verificar que los datos actualizados coincidan con los enviados
+                expect(response.body.data.firstName).toBe(updatedUserData.firstName);
+                expect(response.body.data.lastName).toBe(updatedUserData.lastName);
+                expect(response.body.data.email).toBe(updatedUserData.email);
+                expect(response.body.data.role).toBe(updatedUserData.role);
+              });
+
+            it("should delete a user", async () => {
+                const userIdToDelete = 1;
+                const response = await request(app).delete(`/users/${userIdToDelete}`);
+                expect(response.statusCode).toBe(200);
+                expect(response.body.ok).toBeTruthy();
+                // Verificar que el usuario haya sido eliminado
+                const deletedUserResponse = await request(app).get(`/users/${userIdToDelete}`);
+                expect(deletedUserResponse.statusCode).toBe(404);
+                expect(deletedUserResponse.body.ok).toBeFalsy();
+                expect(deletedUserResponse.body.error).toBe("User not found");
+              });
             });
