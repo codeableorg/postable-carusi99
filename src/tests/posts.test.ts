@@ -31,4 +31,14 @@ describe("Backend Testing", () => {
     expect(response.body.data[0].username).toBe("user1");
   });
 
+  it("should create a new post", async () => {
+    const newPost = {
+      content: "New post content"
+    };
+    const response = await request(app).post("/posts").send(newPost);
+    expect(response.statusCode).toBe(201);
+    expect(response.body.ok).toBeTruthy();
+    expect(response.body.data.content).toBe(newPost.content);
+  });
+
 });
