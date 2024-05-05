@@ -40,5 +40,15 @@ describe("Backend Testing", () => {
     expect(response.body.ok).toBeTruthy();
     expect(response.body.data.content).toBe(newPost.content);
   });
+  it("should update a post", async () => {
+    const postIdToUpdate = 1;
+    const updatedPostData = {
+      content: "Updated post content"
+    };
+    const response = await request(app).patch(`/posts/${postIdToUpdate}`).send(updatedPostData);
+    expect(response.statusCode).toBe(200);
+    expect(response.body.ok).toBeTruthy();
+    expect(response.body.data.content).toBe(updatedPostData.content);
+  });
 
 });
