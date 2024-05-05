@@ -17,4 +17,10 @@ describe("Backend Testing", () => {
              (2, 'Post 1 by user 2', NOW(), NOW());
     `);
   });
-  
+  it("should get all posts", async () => {
+    const response = await request(app).get("/posts");
+    expect(response.statusCode).toBe(200);
+    expect(response.body.ok).toBeTruthy();
+    expect(response.body.data).toHaveLength(2);
+  });
+});
