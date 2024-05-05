@@ -1,14 +1,14 @@
 import { describe, beforeEach, it, expect } from "vitest";
 import request from "supertest";
 import { app } from "../app"; // Importa tu aplicación Express
-import { truncateTables } from "../db/utils"; // Funciones auxiliares para configurar la base de datos
+import { truncateTable } from "../db/utils"; // Funciones auxiliares para configurar la base de datos
 import * as db from "../db";
 
 describe("Backend Testing", () => {
   // Antes de cada prueba, limpiar y configurar la base de datos
   beforeEach(async () => {
     // Limpia todas las tablas relevantes
-    await truncateTables(["Users", "Posts", "Likes"]);
+    await truncateTable("Users");
 
     // Inserta datos de prueba en las tablas
     await db.query(`
@@ -18,3 +18,10 @@ describe("Backend Testing", () => {
              `);
             });
             
+            it("should get all users", async () => {
+                const response = await request(app).get("/me");
+                expect(response.statusCode).toBe(200);
+                expect(response.body.ok).toBeTruthy();
+                expect(response.body.data).toHaveLength(2);
+              });
+            });
