@@ -12,3 +12,7 @@ export interface PostFilters {
   username?: string;
 }
 
+export interface UpdatePostParams {
+  id: number;
+  fieldsToUpdate: Record<string, any>;
+}

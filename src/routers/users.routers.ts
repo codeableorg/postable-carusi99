@@ -30,31 +30,40 @@ userRouter.get("/me", authenticateHandler, async (req, res, next) => {
 
 });
 
-userRouter.patch("/me", authenticateHandler, async (req, res, next) => {
-  if (req.userId === undefined) {
-    return res.status(401).json({ ok: false, message: "No autorizado" });
-  }
-  try {
-    const user: User = req.body;
-    const updatedUser = await updateUsers(req.userId, req.body);
-    if (!updatedUser) {
-      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+//PATCH/me:
+userRouter.patch(
+  "/",
+  authenticateHandler,
+  async (req, res, next) => {
+    if (req.userId === undefined) {
+      return next(new ApiError("Unauthorized", 401));
     }
-    res.status(200).json({
-      ok: true,
-      data: {
-        id: user.id,
-        username: user.username,
-        firstName: user.firstname,
-        email: user.email,
-        createdAt: user.createdat,
-        updatedAt: user.updatedat
-      }
-    });
-  } catch (error) {
-    next(error);
+    try {
+      const userData: User = req.body;
+      const profile = await updateUsers(req.userId, userData);
+      res.json({
+        ok: true,
+        message: "User updated successfully",
+        data: {
+          id: profile.id,
+          username: profile.username,
+          email: profile.email,
+          firstName: profile.firstname,
+          lastName: profile.lastname,
+          createdAt: profile.createdat,
+          updatedAt: profile.updatedat,
+        },
+      });
+    } catch (error) {
+      next(
+        new ApiError(
+          "Bad request: only firstName, lastName or email can be edited",
+          401
+        )
+      );
+    }
   }
-});
+);
 
 userRouter.delete("/me", authenticateHandler, async (req, res, next) => {
   if (req.userId === undefined) {

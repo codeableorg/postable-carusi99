@@ -33,6 +33,13 @@ SELECT
     NOW() -- Fecha y hora de actualización
 FROM generate_series(1, 100) AS s(id);
 
+-- Insertar datos de ejemplo en la tabla Likes
+INSERT INTO Likes (postId, userId, createdAt)
+SELECT
+    (s.id % 100) + 1, -- ID de post aleatorio
+    (s.id % 50) + 1, -- ID de usuario aleatorio
+    NOW() -- Fecha y hora del like
+FROM generate_series(1, 200) AS s(id);
   `).then(() => {
   console.log("Products inserted");
   pool.end();

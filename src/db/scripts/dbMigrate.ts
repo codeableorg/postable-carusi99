@@ -1,14 +1,25 @@
-import "dotenv/config";
+import { configDotenv } from "dotenv";
 import path from "node:path";
 import fs from "node:fs";
-import { query } from "..";
+import { query, pool } from "..";
 import { JSONStorage, Umzug } from "umzug";
+
+if (process.env["NODE_ENV"] === "test") {
+  configDotenv({ path: ".env.test" });
+} else {
+  configDotenv();
+}
+
+const migrationsFileName =
+  process.env["NODE_ENV"] === "test"
+    ? "migrations.test.json"
+    : "migrations.json";
 
 const migrator = new Umzug({
   migrations: { glob: path.join(__dirname, "..", "migrations", "*.ts") },
   context: { query },
   storage: new JSONStorage({
-    path: path.join(__dirname, "..", "migrations", "migrations.json"),
+    path: path.join(__dirname, "..", "migrations", migrationsFileName),
   }),
   logger: console,
   create: {
@@ -28,4 +39,4 @@ const migrator = new Umzug({
 
 export type Migration = typeof migrator._types.migration;
 
-migrator.runAsCLI();
+migrator.runAsCLI().then(() => pool.end());

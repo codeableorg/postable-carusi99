@@ -1,45 +1,46 @@
+import {
+  createPostDB,
+  getPostsByUsernameFromDB,
+  getPostsCountFromDB,
+  getPostsFromDB,
+  updatePostDB,
+} from "../data/posts.data";
+import { Post, PostFilters } from "../models/posts";
 
-import { Post, PostFilters } from '../models/posts';
-import { ApiError } from '../middlewares/error';
-import * as postData from '../data/posts.data';
-import { createPost, getPostById, getPostsByUsernameFromDatabase} from '../data/posts.data';
-
-export async function getPostsbyUsername(filters: PostFilters = {}, orderBy: string = 'createdAt', order: string = 'asc', page: number = 1, limit: number = 10): Promise<Post[]> {
-  try {
-    const posts = await postData.getPosts(page, limit, filters, orderBy, order);
-    return posts;
-  } catch (error) {
-    throw new ApiError('Error al obtener los posts desde la base de datos', 400);
-  }
+//POST/posts:
+export async function createPost(id: number, post: Post) {
+  const newPost: Post = await createPostDB(id, post);
+  return newPost;
 }
 
-export async function getPostsUsername(username: string): Promise<Post[]>  {
-  try {
-    const posts = await getPostsByUsernameFromDatabase(username);
-    return posts;
-  } catch (error) {
-    throw new ApiError('Error al obtener los posts desde la base de datos', 400);
-  }
+//PATCH/posts/:id:
+export async function updatePost(id: number, post: Post) {
+  const dataPost = {
+    id,
+    fieldsToUpdate: post,
+  };
+  const updatePost: Post = await updatePostDB(dataPost);
+  return updatePost;
 }
 
-export async function createNewPost(userId: number, content: string): Promise<Post> {
-  try {
-    const newPost = await createPost(userId, content);
-    return newPost;
-  } catch (error) {
-    throw new Error("Error al crear el nuevo post");
-  }
+//GET/posts
+export async function getPosts(
+  filters: PostFilters = {},
+  sort?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<Post[]> {
+  return await getPostsFromDB(filters, sort, page, limit);
 }
 
-// Editar un post existente
-export async function getPost(postId: number) {
-  try {
-    const post = await getPostById(postId);
-    if (!post) {
-      throw new Error('El post no existe');
-    }
-    return post;
-  } catch (error) {
-    throw new Error('Error al obtener el post');
-  }
+export async function getPostsCount(
+  filters: PostFilters = {}
+): Promise<number> {
+  return getPostsCountFromDB(filters);
+}
+
+//GET/posts/:username:
+export async function getPostsByUsername(username: string) {
+  const posts = await getPostsByUsernameFromDB(username);
+  return posts;
 }

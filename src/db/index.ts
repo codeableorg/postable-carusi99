@@ -1,5 +1,12 @@
-import "dotenv/config";
+
 import { Client, Pool } from "pg";
+import { configDotenv } from "dotenv";
+
+if (process.env["NODE_ENV"] === "test") {
+  configDotenv({ path: ".env.test" });
+} else {
+  configDotenv();
+}
 
 export const pool = new Pool({
   host: process.env["PGHOST"],

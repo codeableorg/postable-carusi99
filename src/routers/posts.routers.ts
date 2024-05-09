@@ -1,141 +1,102 @@
-import express from "express";
-import { getPosts, getTotalPosts, getPostsByUsernameFromDatabase, createPost, editPost, checkIfUserExists, getPostById } from "../data/posts.data";
-import { pagination } from "../data/utils";
-import { PostFilters } from "../models/posts";
+import express, { NextFunction, Request, Response } from "express";
 import { authenticateHandler } from "../middlewares/authenticate";
+import { ApiError } from "../middlewares/error";
+import { Post, PostFilters } from "../models/posts";
+import {
+  createPost,
+  updatePost,
+  getPostsByUsername,
+  getPosts,
+  getPostsCount
+} from "../services/posts.service";
 
 const postsRouter = express.Router();
 
-//TRAE LOS POSTS
-postsRouter.get('/', async (req, res) => {
-  try {
-    const { page = 1, limit = 10, username, orderBy = 'createdAt', order = 'asc' } = req.query;
-    const pageInt = parseInt(page as string, 10);
-    const limitInt = parseInt(limit as string, 10);
-
-    // Aplicar paginación
-    const totalItems = await getTotalPosts(username as string);
-    const totalPages = Math.ceil(totalItems / limitInt);
-    const paginationInfo = pagination(pageInt, limitInt);
-
-    let filters: PostFilters = {};
-    if (typeof username === 'string' && username !== '') {
-      filters.username = username;
+//POST/posts:
+postsRouter.post(
+  "/",
+  authenticateHandler,
+  async (req: Request, res: Response, next: NextFunction) => {
+    if (req.userId === undefined) {
+      return next(new ApiError("Unauthorized", 401));
     }
-
-    const posts = await getPosts(
-      pageInt,
-      limitInt,
-      filters,
-      orderBy as string,
-      order as string
-    );
-
-    res.status(200).json({
-      ok: true,
-      data: posts,
-      pagination: {
-        page: pageInt,
-        pageSize: limitInt,
-        totalItems: totalItems,
-        totalPages: totalPages,
-        nextPage: posts.length === limitInt ? pageInt + 1 : null,
-        previousPage: pageInt > 1 ? pageInt - 1 : null
-      }
-    });
-  } catch (error) {
-    console.error('Error al obtener los posts:', error);
-    res.status(500).json({ ok: false, message: 'Error al obtener los posts' });
+    try {
+      const postData: Post = req.body;
+      const newPost = await createPost(req.userId, postData);
+      res.status(201).json({
+        ok: true,
+        data: newPost,
+      });
+    } catch (error) {
+      next(new ApiError("Bad Request", 400));
+    }
   }
+);
+
+//PATCH/posts/:id:
+
+postsRouter.patch(
+  "/:id",
+  authenticateHandler,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const postData: Post = req.body;
+      const { id } = req.params;
+      const post = await updatePost(Number(id), postData);
+      res.json({
+        ok: true,
+        data: post,
+      });
+    } catch (error) {
+      console.log(error);
+      next(new ApiError("Bad Request", 400));
+    }
+  }
+);
+
+postsRouter.get("/posts", async (req: Request, res: Response) => {
+  const filters: PostFilters = {
+    username: req.query["username"] as string,
+  };
+  const sort = req.query["sort"] as string | undefined;
+  const page = Number(req.query["page"]) || 1;
+  const limit = Number(req.query["limit"]) || 10;
+
+  const posts = await getPosts(filters, sort, page, limit);
+
+  //pagination:
+  const totalItems: number = await getPostsCount(filters);
+  const totalPages = Math.ceil(totalItems / limit);
+
+  res.json({
+    ok: true,
+    data: [{ posts: posts }],
+    pagination: {
+      page: 1,
+      pageSize: 10,
+      totalItems: 20,
+      totalPages: 2,
+      nextPage: page < totalPages ? page + 1 : null,
+      previousPage: page > 1 ? page - 1 : null,
+    },
+  });
 });
 
+//GET/posts/:username?page=2&limit=5
 
-//TRAE LOS POSTS DE UN USUARIO
-postsRouter.get('/:username', async (req, res) => {
+postsRouter.get("/posts/:username", async (req: Request, res: Response) => {
   try {
     const { username } = req.params;
-    const { page = 1, limit = 10, orderBy = 'createdAt', order = 'asc' } = req.query;
-    const pageInt = parseInt(page as string, 10);
-    const limitInt = parseInt(limit as string, 10);
-
-    // Verificar si el usuario existe
-    const userExists = await checkIfUserExists(username);
-
-    if (userExists) {
-      const posts = await getPostsByUsernameFromDatabase(username, pageInt, limitInt, orderBy as string, order as string);
-
-      if (posts) { // Verificar si se devolvieron posts
-        res.status(200).json({
-          ok: true,
-          data: posts,
-          pagination: {
-            page: pageInt,
-            pageSize: limitInt,
-            nextPage: posts.length === limitInt ? pageInt + 1 : null,
-            previousPage: pageInt > 1 ? pageInt - 1 : null
-          }
-        });
-      } else {
-        res.status(404).json({ ok: false, message: 'No se encontraron posts para el usuario especificado' });
-      }
-    } else {
-      res.status(404).json({ ok: false, message: 'El usuario especificado no existe' });
-    }
+    const result = await getPostsByUsername(username);
+    res.json({
+      ok: true,
+      result: result,
+    });
   } catch (error) {
-    console.error('Error al obtener los posts:', error);
-    res.status(500).json({ ok: false, message: 'Error al obtener los posts' });
-  }
-});
-
-//CREA UN NUEVO POST
-postsRouter.post("/posts", authenticateHandler, async (req, res) => {
-  try {
-    const { content } = req.body;
-
-    // Verificar si el usuario está autenticado
-    if (!req.userId) {
-      return res.status(401).json({ ok: false, message: "Usuario no autenticado" });
-    }
-
-    // Verificar si se proporciona el contenido del post
-    if (!content || content.trim() === "") {
-      return res.status(400).json({ ok: false, message: "El contenido del post no puede estar vacío" });
-    }
-
-    // Crear el nuevo post si el usuario está autenticado
-    const newPost = await createPost(req.userId, content);
-
-    // Responder con el nuevo post creado
-    res.status(201).json({ ok: true, data: newPost });
-  } catch (error) {
-    console.error("Error al crear el post:", error);
-    res.status(500).json({ ok: false, message: "Error al crear el post" });
-  }
-});
-
-//EDITA UN POST 
-postsRouter.patch("/posts/:id", authenticateHandler, async (req, res) => {
-  const postId = parseInt(req.params.id);
-  const { content } = req.body;
-
-  try {
-    // Verificar si el post existe
-    const existingPost = await getPostById(postId);
-    if (!existingPost) {
-      return res.status(404).json({ ok: false, message: "El post no existe" });
-    }
-
-    if (!content || content.trim() === "") {
-      return res.status(400).json({ ok: false, message: "El contenido actualizado del post no puede estar vacío" });
-    }
-
-    const updatedPost = await editPost(postId, content);
-
-    res.status(200).json({ ok: true, data: updatedPost });
-  } catch (error) {
-    console.error("Error al editar el post:", error);
-    res.status(500).json({ ok: false, message: "Error al editar el post" });
+    res.status(404).json({ ok: false, message: "User doesn't exist" });
   }
 });
 
 export default postsRouter;
+
+

@@ -8,7 +8,7 @@ describe("Backend Testing", () => {
   // Antes de cada prueba, limpiar y configurar la base de datos
   beforeEach(async () => {
     // Limpia todas las tablas relevantes
-    await truncateTable("Posts");
+    await truncateTable("posts");
 
     // Inserta datos de prueba en las tablas
     await db.query(`

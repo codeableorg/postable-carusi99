@@ -1,5 +1,17 @@
-import "dotenv/config";
 import { adminClient } from "..";
+import { configDotenv } from "dotenv";
+import fs from "node:fs";
+import path from "node:path";
+
+if (process.env["NODE_ENV"] === "test") {
+  configDotenv({ path: ".env.test" });
+} else {
+  configDotenv();
+}
+const migrationsFileName =
+  process.env["NODE_ENV"] === "test"
+    ? "migrations.test.json"
+    : "migrations.json";
 
 const dbName = process.env["PGDATABASE"];
 
@@ -11,5 +23,16 @@ adminClient.query(`DROP DATABASE IF EXISTS "${dbName}"`, (err) => {
   } else {
     console.log(`Base de datos "${dbName}" eliminada exitosamente`);
   }
-  adminClient.end();
+  try {
+    fs.unlinkSync(
+      path.join(__dirname, "..", "migrations", migrationsFileName)
+    );
+  } catch {
+    console.log(
+      "No se pudo eliminar el archivo de migraciones",
+      migrationsFileName
+    );
+  }
+adminClient.end();
 });
+

@@ -51,7 +51,7 @@ export const up: Migration = async (params) => {
     )
     .join(", ");
   const sqlQuery = `INSERT INTO Users (username, password, email, firstName, lastName, role, createdAt, updatedAt) VALUES ${values};`;
-
+  console.log(sqlQuery);
   return await params.context.query(sqlQuery);
 };
 

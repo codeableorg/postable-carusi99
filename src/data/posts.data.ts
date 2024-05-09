@@ -1,142 +1,91 @@
 import * as db from "../db";
 import { ApiError } from "../middlewares/error";
-import { Post } from "../models/posts";
+import { Post, UpdatePostParams } from "../models/posts";
 import { PostFilters } from "../models/posts";
 import { filtering, sorting } from "./utils";
 
-export async function getPosts(
-  page: number, 
-  limit: number,
+//POST/posts:
+export async function createPostDB(id: number, post: Post) {
+  const { content } = post;
+  const result = await db.query(
+    "INSERT INTO posts (userid, content) VALUES ($1,$2) RETURNING id,content,createdat,updatedat,(SELECT u.username FROM users AS u WHERE u.id =$1) AS username, 0 AS likesCount",
+    [id, content]
+  );
+  return result.rows[0];
+}
+
+//PATCH/posts:id:
+export async function updatePostDB({
+  id,
+  fieldsToUpdate,
+}: UpdatePostParams): Promise<Post> {
+  if (!id || Object.keys(fieldsToUpdate).length === 0) {
+    throw new Error("No se proporcionaron datos para actualizar");
+  }
+
+  const entries = Object.entries(fieldsToUpdate);
+  const setClauses = entries.map(([key, _], index) => `${key} = $${index + 1}`);
+
+  const updateQuery = `UPDATE posts SET ${setClauses.join(
+    ", "
+  )}, updatedat = NOW() WHERE id = $${
+    entries.length + 1
+  } RETURNING *, (SELECT username FROM users WHERE id = posts.userid) AS username`;
+
+  const params = [...entries.map(([, value]) => value), id];
+
+  const result = await db.query(updateQuery, params);
+
+  return result.rows[0];
+}
+
+export async function getPostsFromDB(
   filters: PostFilters = {},
-  orderBy: string = 'createdAt',
-  order: string = 'asc'): 
-  Promise<Post[]> {
-    try {
-      // Utiliza getPostsByUsernameFromDatabase para obtener los posts junto con su conteo de likes
-      let query = "SELECT * FROM posts";
-      const queryParams: (string | boolean | number)[] = [];
+  sort?: string,
+  page?: number,
+  limit?: number
+): Promise<Post[]> {
+  let query =
+    "SELECT p.id,p.content,p.createdat,p.updatedat,u.username, COALESCE(SUM(CASE WHEN pl.id IS NOT NULL THEN 1 ELSE 0 END),0) AS LikesCount FROM posts AS p JOIN users AS u ON u.id=p.userid LEFT JOIN likes AS pl ON pl.postid = p.id GROUP BY p.id, u.username";
+  const queryParams: (string | boolean | number)[] = [];
 
-      // Filtering
-      query = filtering(query, filters, queryParams);
-      // Sorting
-      query += ` ORDER BY ${orderBy} ${order}`;
+  //Filtering:
+  query = filtering(query, filters, queryParams);
 
-      // Pagination
-      if (page && limit) {
-        const offset = (page - 1) * limit;
-        query += ` LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
-        queryParams.push(limit, offset);
-      }
+  //Sorting:
+  query = sorting(query, sort);
 
-      const result = await db.query(query, queryParams);
-      return result.rows;
-    } catch (error) {
-      console.error('Error al obtener los posts:', error);
-      throw new ApiError('Error al obtener los posts', 500);
-    }
+  //Pagination:
+  if (page && limit) {
+    const offset = (page - 1) * limit;
+    query += ` LIMIT ${limit} OFFSET ${offset}`;
+  }
+
+  const result = await db.query(query, queryParams);
+  return result.rows;
 }
 
-export async function getTotalPosts(username?: string): Promise<number> {
-  try {
-    let query = 'SELECT COUNT(*) FROM posts';
-    const queryParams: any[] = [];
+export async function getPostsCountFromDB(
+  filters: PostFilters = {}
+): Promise<number> {
+  let query = "SELECT COUNT(*) FROM posts";
+  const queryParams: (string | boolean | number)[] = [];
+  // Filtering
+  query = filtering(query, filters, queryParams);
 
-    if (username) {
-      query += ' WHERE username = $1';
-      queryParams.push(username);
-    }
-
-    const { rows } = await db.query(query, queryParams);
-    return parseInt(rows[0].count, 10);
-  } catch (error) {
-    console.error('Error al obtener el total de posts desde la base de datos:', error);
-    throw new ApiError('Error al obtener el total de posts desde la base de datos', 400);
-  }
+  const result = await db.query(query, queryParams);
+  return Number(result.rows[0].count);
 }
 
-export async function getPostsByUsernameFromDatabase(username: string, page: number, limit: number, orderBy: string = 'createdAt', order: string = 'asc'): Promise<Post[]> {
-  try {
-    let query = `
-    SELECT p.id, p.content, p.createdat, p.updatedat, u.username, 
-    COALESCE(SUM(CASE WHEN pl.id IS NOT NULL THEN 1 ELSE 0 END), 0) AS likeCount 
-    FROM posts AS p 
-    JOIN users AS u ON u.id=p.userid 
-    LEFT JOIN likes AS pl ON pl.postid = p.id`;
-
-    const queryParams: any[] = [];
-
-    if (username) {
-      query += ' WHERE u.username = $1';
-      queryParams.push(username);
-    }
-
-    query += ` GROUP BY p.id, u.username`;
-    query += ` ORDER BY ${orderBy} ${order}`;
-    query += ` LIMIT ${limit} OFFSET ${(page - 1) * limit}`;
-
-    const { rows } = await db.query(query, queryParams);
-    return rows;
-  } catch (error) {
-    throw new ApiError('Error al obtener los posts del usuario', 401);
+//GET/posts/:username:
+export async function getPostsByUsernameFromDB(username: string) {
+  const result = await db.query(
+    "SELECT p.id,p.content,p.createdat,p.updatedat,u.username, COALESCE(SUM(CASE WHEN pl.id IS NOT NULL THEN 1 ELSE 0 END),0) AS LikesCount FROM posts AS p JOIN users AS u ON u.id=p.userid LEFT JOIN likes AS pl ON pl.postid = p.id WHERE username =$1 GROUP BY p.id, u.username;",
+    [username]
+  );
+  if (result.rows.length === 0) {
+    throw new Error("No posts for this user");
   }
-}
-
-
-export async function createPost(userId: number, content: string): Promise<Post> {
-  try {
-    const result = await db.query(
-      `INSERT INTO posts (userid, content) VALUES ($1,$2) RETURNING id,content,createdat,updatedat,(SELECT u.username FROM users AS u WHERE u.id =$1) AS username, 0 AS likesCount`,
-      [userId, content]
-    );
-
-    return result.rows[0];
-  } catch (error) {
-    throw new ApiError("Error al crear el post en la base de datos", 400);
-  }
-}
-
-export async function editPost(postId: number, content: string): Promise<Post> {
-  try {
-    const query = `UPDATE posts SET content = $1, updatedat = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`;
-    const params = [content, postId];
-    const { rows } = await db.query(query, params);
-
-    if (rows.length === 0) {
-      throw new ApiError("El post no existe", 404);
-    }
-
-    return rows[0];
-  } catch (error) {
-    throw new ApiError("Error al editar el post en la base de datos", 500);
-  }
-}
-
-export async function checkIfUserExists(username: string): Promise<boolean> {
-  try {
-    const query = 'SELECT COUNT(*) AS count FROM users WHERE username = $1';
-    const params = [username];
-    const { rows } = await db.query(query, params);
-    const userCount = parseInt(rows[0].count, 10);
-    return userCount > 0;
-  } catch (error) {
-    console.error('Error al verificar si el usuario existe:', error);
-    throw new ApiError('Error al verificar si el usuario existe', 400);
-  }
-}
-
-export async function getPostById(postId: number): Promise<Post | null> {
-  try {
-    const query = 'SELECT * FROM posts WHERE id = $1';
-    const queryParams = [postId];
-    const { rows } = await db.query(query, queryParams);
-    
-    if (rows.length === 0) {
-      throw new ApiError('El post no existe', 404);
-    }
-
-    return rows[0];
-  } catch (error) {
-    throw new ApiError('Error al obtener el post desde la base de datos', 400);
-  }
+  return result.rows;
 }
 
