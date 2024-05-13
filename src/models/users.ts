@@ -25,11 +25,12 @@ export const userSchema = z.object({
     .optional(),
   createdat: z.string().optional(),
   updatedat: z.string().optional(),
+  
 });
 
 export type UserParams = z.infer<typeof userSchema>;
 
-export type User = UserParams & { id: number };
+export type User = UserParams & { id: number, [key: string]: any; };
 
 export interface UpdateUserParams {
     id: number;

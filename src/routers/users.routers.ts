@@ -32,7 +32,7 @@ userRouter.get("/me", authenticateHandler, async (req, res, next) => {
 
 //PATCH/me:
 userRouter.patch(
-  "/",
+  "/user/me",
   authenticateHandler,
   async (req, res, next) => {
     if (req.userId === undefined) {

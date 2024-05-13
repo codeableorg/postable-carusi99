@@ -1,17 +1,19 @@
-export interface Post {
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-  username: string;
-  nextPage: number | null; // Cambiado de 'null' a 'number | null'
-  previousPage: number | null; // Cambiado de 'null' a 'number | null'
-}
+import { z } from "zod";
 
-// post-filter.ts
-export interface PostFilters {
+export const postSchema = z.object({
+  content: z.string(),
+  createdat: z.string(),
+  updatedat: z.string(),
+  username: z.string(),
+});
+
+export type PostParams = z.infer<typeof postSchema>;
+
+export type Post = PostParams & { id?: number };
+
+export type PostFilters = {
   username?: string;
-}
-
+};
 export interface UpdatePostParams {
   id: number;
   fieldsToUpdate: Record<string, any>;

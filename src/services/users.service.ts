@@ -7,13 +7,13 @@ export async function getUsers(id: number): Promise<User> {
 }
 
 
-export async function updateUsers(id: number, user: User){
-  const updatedUser = {
-    id, 
-    fieldsToUpdate: user
-  }
-const result: User = await userDB.updateUser(id,updatedUser);
-return result;
+export async function updateUsers(id: number, user: User) {
+  const dataUser = {
+    id,
+    fieldsToUpdate: user,
+  };
+  const updateProfile: User = await userDB.editUser(dataUser);
+  return updateProfile;
 }
 
 export async function deleteUsers(id: number): Promise<User | undefined> {

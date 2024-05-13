@@ -12,30 +12,31 @@ export async function getUser(id: number): Promise<User> {
   
 //ACTUALIZA UN USUARIO
 
-// Función para actualizar un usuario en la base de datos
-export async function updateUser(userId: number, newData: UpdateUserParams): Promise<User> {
-  try {
-    const query = `
-      UPDATE users 
-      SET username = $1, email = $2 
-      WHERE id = $3
-      RETURNING *;`; // Consulta SQL para actualizar el usuario y devolver los datos actualizados
-
-      const username = newData.username ?? ''; // Si newData.username es undefined, se asigna una cadena vacía
-const email = newData.email ?? ''; // Si newData.email es undefined, se asigna una cadena vacía
-
-const params: (string | number | boolean)[] = [username, email, userId];
-
-      // Parámetros para la consulta SQL
-    const { rows } = await db.query(query, params); // Ejecuta la consulta SQL con los parámetros y obtén el resultado
-
-    // Devuelve el usuario actualizado
-    return rows[0];
-  } catch (error) {
-    // En caso de error, registra el error y lanza una instancia de ApiError
-    console.error('Error al actualizar el usuario:', error);
-    throw new ApiError('Error al actualizar el usuario', 500);
+export async function editUser({
+  id,
+  fieldsToUpdate,
+}: UpdateUserParams): Promise<User> {
+  if (!id || Object.keys(fieldsToUpdate).length === 0) {
+    throw new Error("No se proporcionaron datos para actualizar");
   }
+  const allowedFields = ["email", "firstname", "lastname"]; // Lista de campos permitidos para actualizar
+  const validFieldsToUpdate = Object.keys(fieldsToUpdate).filter((field) =>
+    allowedFields.includes(field)
+  );
+  const setClauses = validFieldsToUpdate.map(
+    (field, index) => `${field} = $${index + 1}`
+  );
+  const updateQuery = `UPDATE users SET ${setClauses.join(", ")} WHERE id = $${
+    validFieldsToUpdate.length + 1
+  } RETURNING *`;
+
+  const params = [
+    ...validFieldsToUpdate.map((field) => fieldsToUpdate[field]),
+    id,
+  ];
+  const result = await db.query(updateQuery, params);
+
+  return result.rows[0]; // Devuelve el usuario actualizado
 }
 
 
